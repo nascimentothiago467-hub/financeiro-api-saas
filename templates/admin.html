@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>SaaS - Painel Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .navbar { background-color: #0f1115; }
+        .card { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">⚙️ Gerenciador de Licenças SaaS</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card p-4">
+                    <h5 class="mb-3">Gerar Nova Chave</h5>
+                    <form action="/admin/generate" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Nome do Cliente</label>
+                            <input type="text" name="client_name" class="form-control" required placeholder="Ex: Mercadinho Zé">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Data de Vencimento</label>
+                            <input type="date" name="expires_at" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Gerar Licença</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card p-4">
+                    <h5 class="mb-3">Licenças Ativas</h5>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Chave</th>
+                                <th>Cliente</th>
+                                <th>Vencimento</th>
+                                <th>Status PC</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lic in licenses %}
+                            <tr>
+                                <td><strong>{{ lic[0] }}</strong></td>
+                                <td>{{ lic[2] }}</td>
+                                <td>{{ lic[3] }}</td>
+                                <td>
+                                    {% if lic[1] %}
+                                        <span class="badge bg-success">Em Uso</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Aguardando</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
