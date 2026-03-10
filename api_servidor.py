@@ -13,7 +13,7 @@ templates = Jinja2Templates(directory="templates")
 # --- CONFIGURAÇÃO DO BANCO DE DATOS ---
 # Lembre-se de usar a porta 6543 e o final ?pgbouncer=true
 # Substitua o '*' pela sua senha (codifique @ como %40 e # como %23)
-DB_URL = "postgresql://postgres.yeteaatmtwzzdsyeyilu:d35Tadmin88106423@aws-1-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require"
+DB_URL = os.environ.get("DATABASE_URL")
 
 def get_db_connection():
     try:
