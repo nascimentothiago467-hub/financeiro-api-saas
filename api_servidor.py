@@ -13,7 +13,8 @@ templates = Jinja2Templates(directory="templates")
 # --- CONFIGURAÇÃO DO BANCO DE DATOS ---
 # Lembre-se de usar a porta 6543 e o final ?pgbouncer=true
 # Substitua o '*' pela sua senha (codifique @ como %40 e # como %23)
-DB_URL = "postgresql://postgres.yeteaatmtwzzdsyeyilu:Thiago88106423@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
+DB_URL = "postgresql://postgres.yeteaatmtwzzdsyeyilu:Thiago88106423@aws-1-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require"
+
 def get_db_connection():
     try:
         return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
