@@ -2,64 +2,80 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>SaaS - Painel Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Admin - Juninho</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f8f9fa; }
-        .navbar { background-color: #0f1115; }
-        .card { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+        .table { color: #cbd5e1; }
+        .btn-primary { background-color: #3b82f6; border: none; }
+        .status-active { color: #22c55e; }
+        .status-blocked { color: #ef4444; }
+        input, select { background-color: #0f172a !important; border: 1px solid #334155 !important; color: white !important; }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark mb-4">
-        <div class="container">
-            <span class="navbar-brand mb-0 h1">⚙️ Gerenciador de Licenças SaaS</span>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-shield-lock-fill text-primary"></i> Painel de Licenças</h1>
+            <form class="d-flex w-50" method="get" action="/admin">
+                <input class="form-control me-2" type="search" name="search" placeholder="Buscar por Nome, CPF ou Chave..." value="{{ search }}">
+                <button class="btn btn-outline-primary" type="submit">Buscar</button>
+            </form>
         </div>
-    </nav>
 
-    <div class="container">
         <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card p-4">
-                    <h5 class="mb-3">Gerar Nova Chave</h5>
+            <div class="col-lg-4">
+                <div class="card p-4 mb-4">
+                    <h4>Nova Licença</h4>
                     <form action="/admin/generate" method="post">
-                        <div class="mb-3">
-                            <label class="form-label">Nome do Cliente</label>
-                            <input type="text" name="client_name" class="form-control" required placeholder="Ex: Mercadinho Zé">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Data de Vencimento</label>
-                            <input type="date" name="expires_at" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Gerar Licença</button>
+                        <input type="text" name="key" class="form-control mb-2" placeholder="CHAVE-EXEMPLO" required>
+                        <input type="text" name="client_name" class="form-control mb-2" placeholder="Nome Completo" required>
+                        <input type="text" name="document" class="form-control mb-2" placeholder="CPF ou CNPJ" required>
+                        <input type="date" name="expires_at" class="form-control mb-3" required>
+                        <button type="submit" class="btn btn-primary w-100">Criar Acesso</button>
                     </form>
                 </div>
             </div>
 
-            <div class="col-md-8">
+            <div class="col-lg-8">
                 <div class="card p-4">
-                    <h5 class="mb-3">Licenças Ativas</h5>
-                    <table class="table table-hover">
+                    <table class="table align-middle">
                         <thead>
                             <tr>
-                                <th>Chave</th>
-                                <th>Cliente</th>
+                                <th>Cliente / Doc</th>
                                 <th>Vencimento</th>
-                                <th>Status PC</th>
+                                <th>Status</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for lic in licenses %}
                             <tr>
-                                <td><strong>{{ lic[0] }}</strong></td>
-                                <td>{{ lic[2] }}</td>
-                                <td>{{ lic[3] }}</td>
                                 <td>
-                                    {% if lic[1] %}
-                                        <span class="badge bg-success">Em Uso</span>
-                                    {% else %}
-                                        <span class="badge bg-warning text-dark">Aguardando</span>
-                                    {% endif %}
+                                    <strong>{{ lic.client_name }}</strong><br>
+                                    <small class="text-muted">{{ lic.document }} | {{ lic.key }}</small>
+                                </td>
+                                <td>
+                                    <form action="/admin/extend/{{ lic.key }}" method="post" class="d-flex">
+                                        <input type="date" name="new_date" value="{{ lic.expires_at }}" class="form-control form-control-sm me-1" style="width: 130px;">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-save"></i></button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <span class="{% if lic.status == 'active' %}status-active{% else %}status-blocked{% endif %}">
+                                        {{ 'Ativo' if lic.status == 'active' else 'Bloqueado' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form action="/admin/update-status/{{ lic.key }}" method="post">
+                                        <input type="hidden" name="current_status" value="{{ lic.status }}">
+                                        <button type="submit" class="btn btn-sm {% if lic.status == 'active' %}btn-danger{% else %}btn-success{% endif %}">
+                                            {{ 'Bloquear' if lic.status == 'active' else 'Desbloquear' }}
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             {% endfor %}

@@ -6,72 +6,55 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from datetime import datetime
 
-app = FastAPI()
+app = FastAPI(title="Gestão de Licenças Pro")
 templates = Jinja2Templates(directory="templates")
 
-# COLE SUA URI DO SUPABASE AQUI ABAIXO:
-DB_URL = "postgresql://postgres:Thiago88106423@db.yeteaatmtwzzdsyeyilu.supabase.co:5432/postgres"
+DB_URL = "SUA_URI_AQUI" # Mantenha sua URI com a senha corrigida
 
 def get_db_connection():
     return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
 
-class LicenseRequest(BaseModel):
-    license_key: str
-    machine_id: str
-
-@app.post("/verify-license")
-async def verify_license(data: LicenseRequest):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    cur.execute("SELECT * FROM licenses WHERE key = %s", (data.license_key,))
-    license = cur.fetchone()
-    
-    if not license:
-        return {"status": "invalid", "message": "Chave não encontrada."}
-    
-    # Se a licença está vazia, vincula ao hardware do primeiro que usar
-    if not license['machine_id']:
-        cur.execute("UPDATE licenses SET machine_id = %s, status = 'active' WHERE key = %s", 
-                    (data.machine_id, data.license_key))
-        conn.commit()
-        license['machine_id'] = data.machine_id
-
-    if license['machine_id'] != data.machine_id:
-        return {"status": "blocked", "message": "Licença em uso em outro computador."}
-    
-    expires_at = license['expires_at']
-    if expires_at < datetime.now().date():
-        return {"status": "expired", "message": f"Vencida em {expires_at}"}
-    
-    return {"status": "success", "message": "Ativado!", "expires_at": str(expires_at)}
+# --- ROTAS ADMIN ---
 
 @app.get("/admin", response_class=HTMLResponse)
-async def admin_panel(request: Request):
+async def admin_panel(request: Request, search: str = ""):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM licenses")
+    if search:
+        # Busca por nome, documento ou chave
+        query = "SELECT * FROM licenses WHERE client_name ILIKE %s OR document ILIKE %s OR key ILIKE %s"
+        cur.execute(query, (f'%{search}%', f'%{search}%', f'%{search}%'))
+    else:
+        cur.execute("SELECT * FROM licenses ORDER BY expires_at DESC")
+    
     licenses = cur.fetchall()
-    return templates.TemplateResponse("admin.html", {"request": request, "licenses": licenses})
+    return templates.TemplateResponse("admin.html", {"request": request, "licenses": licenses, "search": search})
 
 @app.post("/admin/generate")
-async def generate_license(key: str = Form(...), client_name: str = Form(...), expires_at: str = Form(...)):
+async def generate_license(key: str = Form(...), client_name: str = Form(...), 
+                           document: str = Form(...), expires_at: str = Form(...)):
     conn = get_db_connection()
     cur = conn.cursor()
-    try:
-        cur.execute(
-            "INSERT INTO licenses (key, machine_id, client_name, expires_at, status) VALUES (%s, %s, %s, %s, %s)",
-            (key, "", client_name, expires_at, "pending")
-        )
-        conn.commit()
-    except:
-        pass
+    cur.execute(
+        "INSERT INTO licenses (key, machine_id, client_name, document, expires_at, status) VALUES (%s, %s, %s, %s, %s, %s)",
+        (key.upper(), "", client_name, document, expires_at, "active")
+    )
+    conn.commit()
     return RedirectResponse(url="/admin", status_code=303)
 
-@app.post("/admin/delete/{key}")
-async def delete_license(key: str):
+@app.post("/admin/update-status/{key}")
+async def toggle_status(key: str, current_status: str = Form(...)):
+    new_status = "blocked" if current_status == "active" else "active"
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM licenses WHERE key = %s", (key,))
+    cur.execute("UPDATE licenses SET status = %s WHERE key = %s", (new_status, key))
+    conn.commit()
+    return RedirectResponse(url="/admin", status_code=303)
+
+@app.post("/admin/extend/{key}")
+async def extend_license(key: str, new_date: str = Form(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE licenses SET expires_at = %s WHERE key = %s", (new_date, key))
     conn.commit()
     return RedirectResponse(url="/admin", status_code=303)
