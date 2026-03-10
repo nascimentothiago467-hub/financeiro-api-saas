@@ -10,7 +10,7 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 # COLE SUA URI DO SUPABASE AQUI ABAIXO:
-DB_URL = "SUA_URI_AQpostgresql://postgres:CAejAwpggfG!P6%@db.yeteaatmtwzzdsyeyilu.supabase.co:5432/postgres"
+DB_URL = "postgres:CAejAwpggfG!P6%@db.yeteaatmtwzzdsyeyilu.supabase.co:5432/postgres"
 
 def get_db_connection():
     return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
