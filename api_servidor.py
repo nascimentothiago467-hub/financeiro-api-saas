@@ -9,7 +9,7 @@ from datetime import datetime
 app = FastAPI(title="Gestão de Licenças Pro")
 templates = Jinja2Templates(directory="templates")
 
-DB_URL = "postgresql://postgres:Thiago88106423@db.yeteaatmtwzzdsyeyilu.supabase.co:5432/postgres"
+DB_URL = "postgresql://postgres:Thiago88106423@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 
 def get_db_connection():
     return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
